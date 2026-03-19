@@ -1,28 +1,35 @@
 import express from 'express';
-import dotenv from 'dotenv'
-import cookieParser from 'cookie-parser'
+import cookieParser from 'cookie-parser';
 
 import authRoutes from './routes/userRoute.js';
 import { connectDB } from './utils/db.js';
+import { ENV } from './utils/env.js';
 
-dotenv.config()
+const app = express();
+const port = Number(ENV.PORT ?? 5000);
 
-const app =express()
+// middleware
+app.use(express.json());
+app.use(cookieParser());
 
-const port = process.env.PORT || 5000
+// routes
+app.use('/api/auth', authRoutes);
+
+app.get('/', (req, res) => {
+    res.send("express working");
+});
+
+// start server AFTER setup
 (async () => {
-    await connectDB();
-    app.listen(port, () => {
-        console.log(`server running on port ${port}`);
-    });
+    try {
+        await connectDB();
+        console.log("DB connected");
+
+        app.listen(port, () => {
+            console.log(`server running on port ${port}`);
+        });
+    } catch (err) {
+        console.error("Startup failed:", err);
+        process.exit(1);
+    }
 })();
-
-app.use(express.json())
-app.use(cookieParser())
-
-app.use('/api/auth',authRoutes)
-
-app.get('/',(req,res)=>{
-    res.send("express working")
-})
-
