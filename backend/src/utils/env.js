@@ -1,7 +1,13 @@
 import 'dotenv/config'
 
 
-const requiredVars = ['JWT_SECRET', 'MONGO_URI'];
+const requiredVars = [
+    'JWT_SECRET',
+    'MONGO_URI',
+    'CLOUDINARY_CLOUD_NAME',
+    'CLOUDINARY_API_KEY',
+    'CLOUDINARY_API_SECRET'
+];
 for (const key of requiredVars) {
     if (!process.env[key]) {
         throw new Error(`Missing required environment variable: ${key}`);
@@ -16,5 +22,9 @@ export const ENV = {
     CLIENT_URL: process.env.CLIENT_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
-    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME
+    EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET
+
 }
