@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 if(process.env.NODE_ENV=="production"){
     app.use(express.static(path.join(_dirname,"../frontend/dist")))
 
-    app.get("/*",(req,res) =>{
+    app.get("/:path(*)",(req,res) =>{
         res.sendFile(path.join(_dirname,"../frontend/dist/index.html"))
     })
 }
