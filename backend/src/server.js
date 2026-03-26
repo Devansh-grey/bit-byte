@@ -8,7 +8,7 @@ import { ENV } from './utils/env.js';
 
 const app = express();
 const port = Number(ENV.PORT ?? 5000);
-const _dirname = path.resolve()
+const __dirname = path.resolve()
 
 // middleware
 app.use(express.json());
@@ -22,10 +22,10 @@ app.get('/', (req, res) => {
 
 // for deployment
 if(process.env.NODE_ENV=="production"){
-    app.use(express.static(path.join(_dirname,"../frontend/dist")))
+    app.use(express.static(path.join(__dirname,"../frontend/dist")))
 
-    app.get("/:path(*)",(req,res) =>{
-        res.sendFile(path.join(_dirname,"../frontend/dist/index.html"))
+    app.get("/{*path}",(req,res) =>{
+        res.sendFile(path.join(__dirname,"../frontend/dist/index.html"))
     })
 }
 
@@ -33,7 +33,6 @@ if(process.env.NODE_ENV=="production"){
 (async () => {
     try {
         await connectDB();
-        console.log("DB connected");
 
         app.listen(port, () => {
             console.log(`server running on port ${port}`);
