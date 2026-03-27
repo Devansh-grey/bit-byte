@@ -9,7 +9,9 @@ const requiredVars = [
     'CLOUDINARY_API_SECRET',
     'RESEND_API_KEY',
     'EMAIL_FROM',
-    'EMAIL_FROM_NAME'
+    'EMAIL_FROM_NAME',
+    'ARCJET_KEY',
+    'CLIENT_URL'
 ]
 
 for (const key of requiredVars) {
