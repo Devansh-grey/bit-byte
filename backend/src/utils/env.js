@@ -1,16 +1,20 @@
 import 'dotenv/config'
 
-
+// Added email vars — missing these causes silent email failures in production
 const requiredVars = [
     'JWT_SECRET',
     'MONGO_URI',
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET'
-];
+    'CLOUDINARY_API_SECRET',
+    'RESEND_API_KEY',
+    'EMAIL_FROM',
+    'EMAIL_FROM_NAME'
+]
+
 for (const key of requiredVars) {
     if (!process.env[key]) {
-        throw new Error(`Missing required environment variable: ${key}`);
+        throw new Error(`Missing required environment variable: ${key}`)
     }
 }
 
@@ -25,6 +29,7 @@ export const ENV = {
     EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME,
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET
-
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+    ARCJET_KEY: process.env.ARCJET_KEY,
+    ARCJET_ENV: process.env.ARCJET_ENV
 }

@@ -1,44 +1,52 @@
-import express from 'express';
-import cookieParser from 'cookie-parser';
+import express from 'express'
+import cookieParser from 'cookie-parser'
+import cors from 'cors'
 import path from 'path'
 
-import authRoutes from './routes/userRoute.js';
-import { connectDB } from './utils/db.js';
-import { ENV } from './utils/env.js';
+import authRoutes from './routes/userRoute.js'
+import { connectDB } from './utils/db.js'
+import { ENV } from './utils/env.js'
 
-const app = express();
-const port = Number(ENV.PORT ?? 5000);
+const app = express()
+const port = Number(ENV.PORT ?? 5000)
 const __dirname = path.resolve()
 
-// middleware
-app.use(express.json());
-app.use(cookieParser());
+// Middleware
+app.use(express.json())
+app.use(cookieParser())
 
-// routes
-app.use('/api/auth', authRoutes);
+// Fixed: CORS was imported in package.json but never applied
+app.use(cors({
+    origin: ENV.CLIENT_URL,
+    credentials: true  // Required so cookies are sent cross-origin
+}))
+
+// Routes
+app.use('/api/auth', authRoutes)
+
+// Health check
 app.get('/', (req, res) => {
-    res.send("express working");
-});
+    res.send("express working")
+})
 
-// for deployment
-if(process.env.NODE_ENV=="production"){
-    app.use(express.static(path.join(__dirname,"../frontend/dist")))
+// Production static file serving
+if (ENV.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "../frontend/dist")))
 
-    app.get("/{*path}",(req,res) =>{
-        res.sendFile(path.join(__dirname,"../frontend/dist/index.html"))
+    app.get("/{*path}", (req, res) => {
+        res.sendFile(path.join(__dirname, "../frontend/dist/index.html"))
     })
 }
 
-// start server AFTER setup
-(async () => {
+// Start server after DB connects
+;(async () => {
     try {
-        await connectDB();
-
+        await connectDB()
         app.listen(port, () => {
-            console.log(`server running on port ${port}`);
-        });
+            console.log(`Server running on port ${port}`)
+        })
     } catch (err) {
-        console.error("Startup failed:", err);
-        process.exit(1);
+        console.error("Startup failed:", err)
+        process.exit(1)
     }
-})();
+})()

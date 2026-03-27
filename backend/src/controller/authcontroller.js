@@ -8,103 +8,99 @@ import cloudinary from "../utils/cloudinary.js"
 const signup = async (req, res) => {
     const { fullName, email, password } = req.body
     try {
-
-        // checking existence of user
         const exist = await User.findOne({ email })
         if (exist) {
             return res.status(409).json({
                 success: false,
-                message: "user already exist try logging in"
+                message: "User already exists, try logging in"
             })
         }
 
-        // hashing password
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        // creating new user
-        const user = new User({
-            fullName,
-            email,
-            password: hashedPassword
-        })
-        const saveduser = await user.save()
-        createToken(saveduser._id, res)
+        const user = new User({ fullName, email, password: hashedPassword })
+        const savedUser = await user.save()
+
+        // createToken is no longer async — no await needed
+        createToken(savedUser._id, res)
 
         res.status(201).json({
             success: true,
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            profilePic: user.profilePic
+            _id: savedUser._id,
+            fullName: savedUser.fullName,
+            email: savedUser.email,
+            profilePic: savedUser.profilePic
         })
 
-        // sending welcome email 
-        try {
-            await sendWelcomeEmail(saveduser.email, saveduser.fullName, ENV.CLIENT_URL)
-        } catch (error) {
-            console.error("Failed to send welcome email", error);
-
-        }
-
+        // Fire-and-forget welcome email (non-blocking, intentional)
+        sendWelcomeEmail(savedUser.email, savedUser.fullName, ENV.CLIENT_URL)
+            .catch(err => console.error("Failed to send welcome email:", err))
 
     } catch (error) {
-        console.log("error in auth Controller", error.message);
-        res.status(500).json({
-            message: "Internal server error"
-        })
+        console.error("Error in signup controller:", error.message)
+        res.status(500).json({ message: "Internal server error" })
     }
 }
 
 const login = async (req, res) => {
     try {
         const { email, password } = req.body
+
         const user = await User.findOne({ email })
         if (!user) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid credentials" })
         }
-        const isPassword = await bcrypt.compare(password,user.password);
+
+        const isPassword = await bcrypt.compare(password, user.password)
         if (!isPassword) {
-             return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid credentials" })
         }
-        createToken(user._id,res)
+
+        // createToken is no longer async — no await needed
+        createToken(user._id, res)
+
         res.status(200).json({
-            _id:user._id,
-            fullName:user.fullName,
-            email:user.email,
-            profilePic:user.profilePic
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            profilePic: user.profilePic
         })
 
+    } catch (error) {
+        console.error("Error in login controller:", error.message)
+        res.status(500).json({ message: "Internal server error" })
+    }
+}
+
+const logout = (_, res) => {
+    // Fixed: cookie name must match what createToken sets ("jwt", not "token")
+    res.cookie("jwt", "", { maxAge: 0 })
+    res.status(200).json({ message: "Logged out successfully" })
+}
+
+const updateProfile = async (req, res) => {
+    try {
+        const { profilePic } = req.body
+        if (!profilePic) {
+            return res.status(400).json({ message: "Profile pic is required" })
+        }
+
+        const userId = req.user._id
+        const uploadResponse = await cloudinary.uploader.upload(profilePic)
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profilePic: uploadResponse.secure_url },
+            { new: true }
+        ).select("-password")
+
+        res.status(200).json({ updatedUser })
 
     } catch (error) {
-        console.error("Error in login controller",error.message);
-        res.status(500).json({message:"Internal server error"})
+        console.error("Error in updateProfile controller:", error)
+        res.status(500).json({ message: "Internal server error" })
     }
 }
 
-const logout = async (_, res) => {
-    res.cookie("token","",{maxAge:0})
-    res.status(200).json({message:"Logged out successfully"})
-}
-
-const updateProfile = async (req,res) => {
-try {
-    const {profilePic} = req.body
-    if (!profilePic) {
-        return res.status(400).json({message:"Profile pic is required"})
-    }
-    const userId = req.user._id
-    const uploadResponse = await cloudinary.uploader.upload(profilePic)
-    const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        {profilePic:uploadResponse.secure_url},
-        {new:true})
-        .select("-password")
-    
-    res.status(200).json({updatedUser})
-} catch (error) {
-    console.error("error in updating profile",error);
-    return res.status(500).json({message:"Internal server error"})
-}
-}
-export { signup, login, logout,updateProfile }
+export { signup, login, logout, updateProfile }
