@@ -6,11 +6,11 @@ import arcjetProtection from "../middleware/arcjet.middleware.js";
 
 const router = express.Router()
 
-// router.use(arcjetProtection)
+router.use(arcjetProtection)
 
 router.post('/signup',registerValidation,signup)
 router.post('/login',loginValidation,login)
-router.post('/logout',authenticateUser,logout)
+router.post('/logout',logout)
 router.get('/check', authenticateUser, checkAuth)
 
 

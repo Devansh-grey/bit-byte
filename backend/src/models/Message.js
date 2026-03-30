@@ -25,6 +25,14 @@ const messageSchema = mongoose.Schema({
     }]
 }, { timestamps: true });
 
-const Message =  mongoose.models.Message ||  mongoose.model("Message",messageSchema)
+
+messageSchema.pre("validate", function (next) {
+    if (!this.text?.trim() && !this.media?.trim()) {
+        this.invalidate("text", "Message must contain text or media")
+    }
+    next()
+})
+
+const Message = mongoose.models.Message || mongoose.model("Message", messageSchema)
 
 export default Message

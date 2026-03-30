@@ -83,9 +83,11 @@ const checkAuth = (req, res) => {
         success: true,
         _id: req.user._id,
         fullName: req.user.fullName,
+        username: req.user.username,
         email: req.user.email,
         profilePic: req.user.profilePic,
-        bio: req.user.bio
+        bio: req.user.bio,
+        lastSeen:req.user.lastSeen
     })
 }
 

@@ -13,6 +13,24 @@ export const sendMessage = async (req, res) => {
                 message: "chatId and message content required",
             });
         }
+        if (!mongoose.Types.ObjectId.isValid(chatId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid chatId",
+            })
+        }
+        const chat = await Chat.findOne({
+            _id: chatId,
+            participants: req.user._id
+        })
+
+        if (!chat) {
+            return res.status(404).json({
+                success: false,
+                message: "Chat not found or not authorized",
+            })
+        }
+
         let mediaUrl
         if (media) {
             const uploadResponse = await cloudinary.uploader.upload(media)
@@ -31,9 +49,8 @@ export const sendMessage = async (req, res) => {
             .populate("sender", "fullName profilePic")
             .populate("chat")
 
-        await Chat.findByIdAndUpdate(chatId, {
-            lastmessage: message._id
-        })
+        chat.lastmessage = message._id
+        await chat.save()
 
         res.status(201).json({
             success: true,
@@ -52,6 +69,26 @@ export const sendMessage = async (req, res) => {
 export const getMessages = async (req, res) => {
     try {
         const { chatId } = req.params
+
+        if (!mongoose.Types.ObjectId.isValid(chatId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid chatId",
+            })
+        }
+
+        const chatExists = await Chat.exists({
+            _id: chatId,
+            participants: req.user._id
+        })
+
+        if (!chatExists) {
+            return res.status(404).json({
+                success: false,
+                message: "Chat not found or not authorized",
+            })
+        }
+
 
         let page = Math.max(1, parseInt(req.query.page) || 1)
         let limit = Math.min(50, parseInt(req.query.limit) || 30)
@@ -85,24 +122,31 @@ export const getMessages = async (req, res) => {
     }
 }
 
-export const markAsSeen = async (req,res) => {
+export const markAsSeen = async (req, res) => {
     try {
-        
-        const {chatId} = req.params
-    
+
+        const { chatId } = req.params
+
         await Message.updateMany(
-            {chat:chatId, seenBy:{$ne:req.user._id}},
-            {$addToSet:{seenBy:req.user._id}}
+            { chat: chatId, seenBy: { $ne: req.user._id } },
+            { $addToSet: { seenBy: req.user._id } }
         )
-        res.status(200).json({success:true})
+        res.status(200).json({ success: true })
     } catch (error) {
-        es.status(500).json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
 export const deleteMessage = async (req, res) => {
     try {
         const { messageId } = req.params
+
+        if (!mongoose.Types.ObjectId.isValid(messageId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid messageId",
+            })
+        }
 
         const message = await Message.findOne({
             _id: messageId,
@@ -116,7 +160,17 @@ export const deleteMessage = async (req, res) => {
             });
         }
 
+        const chatId = message.chat
+
         await message.deleteOne()
+
+        const chat = await Chat.findById(chatId)
+
+        if (chat && chat.lastmessage?.toString() === messageId) {
+            const lastmessage = await Message.findOne({ chat: chatId }).sort({ createdAt: -1 })
+            chat.lastmessage = lastmessage ? lastmessage._id : null
+            await chat.save()
+        }
 
         res.status(200).json({
             success: true,

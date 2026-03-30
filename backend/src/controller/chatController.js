@@ -4,34 +4,66 @@ export const accessChat = async (req, res) => {
 
     try {
         const { userId } = req.body
+
         if (!userId) {
             return res.status(400).json({
                 success: false,
                 message: "UserId required"
             });
         }
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid userId"
+            })
+        }
+        const userExists = await User.exists({ _id: userId })
 
-        let chat = await Chat.findOne({
-            isGroupChat: false,
-            participants: { $all: [req.user._id, userId] }
-        })
-            .populate("participants", "-password")
-            .populate("lastmessage")
-
-        if (chat) {
-            return res.status(200).json({
-                success: true,
-                data: chat
-            });
+        if (!userExists) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
         }
 
-        // create new chat
-        chat = await Chat.create({
-            participants: [req.user._id, userId]
-        })
+        const participants = [req.user._id.toString(), userId].sort()
 
-        const fullChat = await Chat.findById(chat._id)
-            .populate("participants", "-password");
+        let chat
+
+        try {
+
+            chat = await Chat.findOneAndUpdate(
+                {
+                    isGroupChat: false,
+                    participants
+                },
+                {
+                    $setOnInsert: {
+                        participants,
+                        isGroupChat: false
+                    }
+                },
+                {
+                    new: true,
+                    upsert: true
+                }
+            )
+                .populate("participants", "-password")
+                .populate("lastmessage")
+
+        } catch (err) {
+            if (err.code === 11000) {
+                chat = await Chat.findOne({
+                    isGroupChat: false,
+                    participants
+                })
+                    .populate("participants", "-password")
+                    .populate("lastmessage")
+            } else {
+                throw err
+            }
+        }
+
 
         res.status(201).json({
             success: true,
@@ -49,19 +81,19 @@ export const getChats = async (req, res) => {
 
     try {
         const chats = await Chat.find({
-            participants: {$in: [req.user._id]}
+            participants: { $in: [req.user._id] }
         })
-        .populate("participants","-password")
-        .populate({
-            path: "lastmessage",
-            populate:{
-                path: "sender",
-                select: "fullName profilePic"
-            }
-        })
-        .sort({updatedAt:-1})
+            .populate("participants", "-password")
+            .populate({
+                path: "lastmessage",
+                populate: {
+                    path: "sender",
+                    select: "fullName profilePic"
+                }
+            })
+            .sort({ updatedAt: -1 })
 
-         res.status(200).json({
+        res.status(200).json({
             success: true,
             data: chats
         });
@@ -77,7 +109,10 @@ export const getChats = async (req, res) => {
 
 export const getChatById = async (req, res) => {
     try {
-        const chat = await Chat.findById(req.params.chatId)
+        const chat = await Chat.findOne({
+            _id: req.params.chatId,
+            participants: req.user._id
+        })
             .populate("participants", "-password")
             .populate("lastmessage");
 
@@ -103,17 +138,37 @@ export const getChatById = async (req, res) => {
 
 export const deleteChat = async (req, res) => {
     try {
-        await Chat.findByIdAndDelete(req.params.chatId);
+        const { chatId } = req.params
 
-        res.status(200).json({
+        if (!mongoose.Types.ObjectId.isValid(chatId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid chatId"
+            })
+        }
+
+        const chat = await Chat.findOneAndDelete({
+            _id: chatId,
+            participants: req.user._id
+        })
+
+        if (!chat) {
+            return res.status(404).json({
+                success: false,
+                message: "Chat not found or not authorized"
+            })
+        }
+
+        return res.status(200).json({
             success: true,
             message: "Chat deleted"
-        });
+        })
 
     } catch (error) {
-        res.status(500).json({
+        console.error("Error in deleteChat:", error.message)
+        return res.status(500).json({
             success: false,
-            message: error.message
-        });
+            message: "Internal server error"
+        })
     }
-};
+}

@@ -5,6 +5,7 @@ import cloudinary from "../utils/cloudinary.js"
 export const searchUsers = async (req, res) => {
     try {
         const keyword = req.query.q?.trim()
+        const escapedKeyword = keyword?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
         if (!keyword) {
             return res.status(400).json({
@@ -15,9 +16,9 @@ export const searchUsers = async (req, res) => {
 
         const users = await User.find({
             $or: [
-                { fullName: { $regex: keyword, $options: "i" } },
+                { fullName: { $regex: escapedKeyword, $options: "i" } },
                 // { username: { $regex: keyword, $options: "i" } },
-                { email: { $regex: keyword, $options: "i" } }
+                { email: { $regex: escapedKeyword, $options: "i" } }
             ],
             _id: { $ne: req.user._id }
         }).select("-password").limit(20)
@@ -85,7 +86,7 @@ export const updateProfile = async (req, res) => {
             data: {
                 _id: user._id,
                 fullName: user.fullName,
-                username: user.username,
+                // username: user.username,
                 email: user.email,
                 profilePic: user.profilePic
             }

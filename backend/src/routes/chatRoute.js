@@ -1,10 +1,11 @@
 import express from 'express'
 import { accessChat, deleteChat, getChatById, getChats } from '../controller/chatController.js'
 import { authenticateUser } from '../middleware/auth.js'
+import arcjetProtection from '../middleware/arcjet.middleware.js'
 
 const router = express.Router()
 
-router.use(authenticateUser)
+router.use( arcjetProtection,authenticateUser)
 
 router.post("/", accessChat)
 router.get("/", getChats)

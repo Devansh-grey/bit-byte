@@ -1,10 +1,11 @@
 import express from 'express'
 import { authenticateUser } from '../middleware/auth.js'
 import { deleteMessage, getMessages, sendMessage, markAsSeen} from '../controller/messageController.js'
+import arcjetProtection from '../middleware/arcjet.middleware.js'
 
 const router = express.Router()
 
-router.use(authenticateUser)
+router.use(arcjetProtection,authenticateUser)
 
 router.post("/",sendMessage)
 router.get("/:chatId", getMessages)
