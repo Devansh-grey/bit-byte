@@ -105,6 +105,7 @@ const Signup = () => {
                             <div className="pt-2">
                                 <button 
                                 type='submit'
+                                disabled = {loading}
                                 className="w-full border-2 border-black py-4 font-headline font-black tracking-widest uppercase bg-white text-black hover:bg-black hover:text-white">
                                 {loading ? 'Creating account…' : 'Create account'}
                                 </button>

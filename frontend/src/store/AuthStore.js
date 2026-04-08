@@ -7,6 +7,7 @@ export const useAuthStore = create((set, get) => ({
     onlineUsers: [],
 
     checkAuth: async () => {
+        set({isCheckingAuth:true})
         try {
             const res = await axiosInstance.get("/auth/check")
             set({ authUser: res.data })
@@ -42,7 +43,13 @@ export const useAuthStore = create((set, get) => ({
     },
 
     logout: async () => {
-        await axiosInstance.post('/auth/logout')
-        set({ authUser: null, onlineUsers: [] })
+         try {
+            await axiosInstance.post('/auth/logout')
+        } catch (error) {
+            console.error("Logout failed:", error)
+            throw error
+        } finally {
+            set({ authUser: null, onlineUsers: [] })
+        }
     }
 }))

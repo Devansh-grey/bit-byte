@@ -10,7 +10,7 @@ const Navbar = () => {
 
       {/* LEFT */}
       <div 
-      onClick={() => navigate('/home')}
+      onClick={() => navigate('/')}
       className="text-2xl font-black italic font-headline hover:cursor-pointer uppercase tracking-tighter">
         BITCHAT
       </div>
