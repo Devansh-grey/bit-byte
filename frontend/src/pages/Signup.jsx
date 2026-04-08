@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/AuthStore'
+import { useAuthStore } from '../store/AuthStore.js'
 
 const Signup = () => {
     const [form, setForm] = useState({ email: '', password: '' })
@@ -15,10 +15,6 @@ const Signup = () => {
 
     if (!form.email || !form.password ||!form.fullName) {
         alert("Fill in all fields")
-        return
-    }
-    if (form.password.length < 6) {
-        alert('Password must be at least 6 characters')
         return
     }
 
@@ -78,7 +74,7 @@ const Signup = () => {
                                     onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
                                     className="border-2 border-black w-full p-3 font-body text-sm placeholder:opacity-30 rounded-none outline-none"
                                     placeholder="John Doe"
-                                    type="fullName"
+                                    type="text"
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
