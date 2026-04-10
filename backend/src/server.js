@@ -47,6 +47,10 @@ if (ENV.NODE_ENV === "production") {
         res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"))
     })
 }
+console.log("NODE_ENV:", ENV.NODE_ENV)
+console.log("__dirname:", __dirname)
+console.log("static path:", path.join(__dirname, "../../frontend/dist"))
+console.log("index path:", path.join(__dirname, "../../frontend/dist/index.html"))
 
 // Start server after DB connects
 ; (async () => {
