@@ -4,20 +4,17 @@ import { useAuthStore } from "../store/AuthStore.js"
 import Avatar from "../components/Avatar"
 
 const Chats = () => {
-    const { chats, selectedChat, fetchChats, setSelectedChat } = useChatStore()
-    const { authUser } = useAuthStore()
+    const { chats, selectedChat, fetchChats, setSelectedChat, typingUsers } = useChatStore()
+    const { authUser, onlineUsers } = useAuthStore()
 
     const formatChatTime = (date) => {
+        if (!date) return ""
         const d = new Date(date)
         const now = new Date()
         const diff = now - d
         const day = 1000 * 60 * 60 * 24
-        if (diff < day) {
-            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-        }
-        if (diff < day * 2) {
-            return "Yesterday"
-        }
+        if (diff < day) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        if (diff < day * 2) return "Yesterday"
         return d.toLocaleDateString()
     }
 
@@ -27,9 +24,10 @@ const Chats = () => {
         const prefix = isYou ? "YOU: " : ""
         if (message.media && !message.text) return prefix + "📎 MEDIA"
         if (message.media && message.text) return prefix + "📎 " + message.text.toUpperCase()
-        return prefix + message.text.toUpperCase()
+        return prefix + message.text?.toUpperCase()
     }
 
+    // Only fetch once on mount — NOT on every render
     useEffect(() => {
         fetchChats()
     }, [])
@@ -43,9 +41,17 @@ const Chats = () => {
             )}
 
             {chats.map((chat) => {
+                if (!chat?.participants) return null
+
                 const otherUser = chat.participants.find(
-                    (p) => p._id !== authUser?._id
+                    (p) => p?._id !== authUser?._id
                 )
+                const isOnline = onlineUsers.includes(otherUser?._id)
+                const isTyping = typingUsers[chat._id]?.size > 0
+
+
+
+                if (!otherUser) return null
 
                 return (
                     <div
@@ -57,35 +63,36 @@ const Chats = () => {
                                 : "bg-white text-black hover:bg-black hover:text-white"
                             }`}
                     >
-                        
-                        <div className="shrink-0 border-2 border-transparent group-hover:border-white transition-all">
-                             <Avatar
+                        <div className="relative shrink-0 border-2 border-transparent group-hover:border-white transition-all">
+                            <Avatar
                                 name={otherUser?.fullName}
                                 src={otherUser?.profilePic}
                                 size={40}
                             />
+                            {isOnline && (
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
+                            )}
                         </div>
 
-                        
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center mb-0.5">
                                 <p className="font-bold text-sm font-mono truncate">
                                     {otherUser?.fullName?.toUpperCase()}
                                 </p>
-
-                                <span className={`text-[10px] font-mono shrink-0 ml-2 ${
-                                    selectedChat?._id === chat._id ? "text-gray-400" : "text-gray-500"
-                                }`}>
-                                    {chat.lastmessage?.createdAt
-                                        ? formatChatTime(chat.lastmessage.createdAt)
-                                        : ""}
+                                <span className={`text-[10px] font-mono shrink-0 ml-2 ${selectedChat?._id === chat._id ? "text-gray-400" : "text-gray-500"
+                                    }`}>
+                                    {formatChatTime(chat.lastmessage?.createdAt)}
                                 </span>
                             </div>
 
-                            <p className={`text-xs font-mono truncate uppercase ${
-                                selectedChat?._id === chat._id ? "text-gray-300" : "text-gray-600 group-hover:text-gray-300"
-                            }`}>
-                                {getLastMessagePreview(chat.lastmessage, authUser)}
+                            <p className={`text-xs font-mono truncate uppercase ${selectedChat?._id === chat._id ? "text-gray-300" : "text-gray-600 group-hover:text-gray-300"
+                                }`}>
+                                {isTyping
+                                    ? <span className={selectedChat ? "text-green-400" : "text-green-600"}>
+                                        TYPING...
+                                    </span>
+                                    : getLastMessagePreview(chat.lastmessage, authUser)
+                                }
                             </p>
                         </div>
                     </div>

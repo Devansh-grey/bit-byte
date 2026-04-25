@@ -1,6 +1,8 @@
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 import cloudinary from "../utils/cloudinary.js";
+import mongoose from "mongoose";
+import { io } from "../utils/socket.js";
 
 export const sendMessage = async (req, res) => {
     try {
@@ -33,15 +35,19 @@ export const sendMessage = async (req, res) => {
 
         let mediaUrl
         if (media) {
-            const uploadResponse = await cloudinary.uploader.upload(media)
+            const uploadResponse = await cloudinary.uploader.upload(media, {
+                resource_type: "image",
+                folder: "bitchat",
+            })
             mediaUrl = uploadResponse.secure_url
         }
 
         const message = await Message.create({
             sender: req.user._id,
             chat: chatId,
-            text: text?.trim(),
-            media: media ? mediaUrl : null,
+            // avoid storing empty string — pre-validate hook requires text OR media
+            text: text?.trim() || undefined,
+            media: mediaUrl || undefined,
             seenBy: [req.user._id]
         })
 
@@ -49,6 +55,14 @@ export const sendMessage = async (req, res) => {
             .populate("sender", "fullName profilePic")
             .populate("chat")
 
+        io.to(chatId).emit("newMessage", fullMessage)
+
+        chat.participants.forEach((participantId) => {
+            io.to(participantId.toString()).emit("chatUpdated", {
+                chatId,
+                lastmessage: fullMessage
+            })
+        })
         chat.lastmessage = message._id
         await chat.save()
 
@@ -140,43 +154,61 @@ export const markAsSeen = async (req, res) => {
 export const deleteMessage = async (req, res) => {
     try {
         const { messageId } = req.params
-
+ 
         if (!mongoose.Types.ObjectId.isValid(messageId)) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid messageId",
             })
         }
-
+ 
         const message = await Message.findOne({
             _id: messageId,
-            sender: req.user._id
+            sender: req.user._id   // only sender can delete their own message
         })
-
+ 
         if (!message) {
             return res.status(404).json({
                 success: false,
                 message: "Message not found or not authorized",
             });
         }
-
-        const chatId = message.chat
-
+ 
+        const chatId = message.chat.toString()
+ 
         await message.deleteOne()
-
+ 
+        // ── Update lastmessage if this was the last one ───────────────────────
         const chat = await Chat.findById(chatId)
-
-        if (chat && chat.lastmessage?.toString() === messageId) {
-            const lastmessage = await Message.findOne({ chat: chatId }).sort({ createdAt: -1 })
-            chat.lastmessage = lastmessage ? lastmessage._id : null
-            await chat.save()
+        let newLastMessage = null
+ 
+        if (chat) {
+            if (chat.lastmessage?.toString() === messageId) {
+                newLastMessage = await Message.findOne({ chat: chatId })
+                    .sort({ createdAt: -1 })
+                    .populate("sender", "fullName profilePic")
+ 
+                chat.lastmessage = newLastMessage ? newLastMessage._id : null
+                await chat.save()
+            }
+ 
+            // ── Notify everyone in the chat room in real time ─────────────────
+            io.to(chatId).emit("messageDeleted", { messageId, chatId })
+ 
+            // Update sidebar preview for all participants
+            chat.participants.forEach((participantId) => {
+                io.to(participantId.toString()).emit("chatUpdated", {
+                    chatId,
+                    lastmessage: newLastMessage ?? chat.lastmessage ?? null
+                })
+            })
         }
-
+ 
         res.status(200).json({
             success: true,
             message: "Message deleted",
         });
-
+ 
     } catch (error) {
         res.status(500).json({
             success: false,

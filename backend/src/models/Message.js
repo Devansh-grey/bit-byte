@@ -26,11 +26,10 @@ const messageSchema = mongoose.Schema({
 }, { timestamps: true });
 
 
-messageSchema.pre("validate", function (next) {
+messageSchema.pre("validate", async function () {
     if (!this.text?.trim() && !this.media?.trim()) {
         this.invalidate("text", "Message must contain text or media")
     }
-    next()
 })
 
 const Message = mongoose.models.Message || mongoose.model("Message", messageSchema)

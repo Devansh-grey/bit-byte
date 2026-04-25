@@ -5,7 +5,8 @@ import arcjetProtection from '../middleware/arcjet.middleware.js'
 
 const router = express.Router()
 
-router.use( arcjetProtection,authenticateUser)
+router.use( arcjetProtection)
+router.use(authenticateUser)
 
 router.post("/", accessChat)
 router.get("/", getChats)

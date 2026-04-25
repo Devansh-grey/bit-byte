@@ -3,11 +3,89 @@ import Chat from "../models/Chat.js";
 import User from "../models/User.js"
 
 
-export const accessChat = async (req, res) => {
+// export const accessChat = async (req, res) => {
 
+//     try {
+//         const { userId } = req.body
+
+//         if (!userId) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "UserId required"
+//             });
+//         }
+//         if (!mongoose.Types.ObjectId.isValid(userId)) {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Invalid userId"
+//             })
+//         }
+//         const userExists = await User.exists({ _id: userId })
+
+//         if (!userExists) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "User not found"
+//             })
+//         }
+
+//         const participants = [req.user._id.toString(), userId].sort()
+
+//         let chat
+
+//         try {
+
+//             chat = await Chat.findOneAndUpdate(
+//                 {
+//                     isGroupChat: false,
+//                     participants
+//                 },
+//                 {
+//                     $setOnInsert: {
+//                         participants,
+//                         isGroupChat: false
+//                     }
+//                 },
+//                 {
+//                     new: true,
+//                     upsert: true
+//                 }
+//             )
+//                 .populate("participants", "-password")
+//                 .populate("lastmessage")
+
+//         } catch (err) {
+//             if (err.code === 11000) {
+//                 chat = await Chat.findOne({
+//                     isGroupChat: false,
+//                     participants
+//                 })
+//                     .populate("participants", "-password")
+//                     .populate("lastmessage")
+//             } else {
+//                 throw err
+//             }
+//         }
+
+
+//         res.status(201).json({
+//             success: true,
+//             data: chat
+//         });
+
+//     } catch (error) {
+//         res.status(500).json({
+//             success: false,
+//             message: error.message
+//         });
+//     }
+// }
+
+
+export const accessChat = async (req, res) => {
     try {
         const { userId } = req.body
-
+ 
         if (!userId) {
             return res.status(400).json({
                 success: false,
@@ -20,60 +98,49 @@ export const accessChat = async (req, res) => {
                 message: "Invalid userId"
             })
         }
+ 
         const userExists = await User.exists({ _id: userId })
-
         if (!userExists) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
             })
         }
-
+ 
+        // Sort participants so [A,B] and [B,A] are treated identically
         const participants = [req.user._id.toString(), userId].sort()
-
-        let chat
-
-        try {
-
-            chat = await Chat.findOneAndUpdate(
-                {
-                    isGroupChat: false,
-                    participants
-                },
-                {
-                    $setOnInsert: {
-                        participants,
-                        isGroupChat: false
-                    }
-                },
-                {
-                    new: true,
-                    upsert: true
-                }
-            )
-                .populate("participants", "-password")
-                .populate("lastmessage")
-
-        } catch (err) {
-            if (err.code === 11000) {
-                chat = await Chat.findOne({
-                    isGroupChat: false,
-                    participants
-                })
-                    .populate("participants", "-password")
-                    .populate("lastmessage")
-            } else {
-                throw err
-            }
+ 
+        // Try to find an existing 1-to-1 chat first
+        let chat = await Chat.findOne({
+            isGroupChat: false,
+            participants: { $all: participants, $size: 2 }
+        })
+            .populate("participants", "-password")
+            .populate("lastmessage")
+ 
+        if (chat) {
+            return res.status(200).json({
+                success: true,
+                data: chat
+            });
         }
-
-
+ 
+        // No existing chat — create one
+        const newChat = await Chat.create({
+            participants,
+            isGroupChat: false
+        })
+ 
+        const fullChat = await Chat.findById(newChat._id)
+            .populate("participants", "-password")
+ 
         res.status(201).json({
             success: true,
-            data: chat
+            data: fullChat
         });
-
+ 
     } catch (error) {
+        console.error("accessChat error:", error)
         res.status(500).json({
             success: false,
             message: error.message
