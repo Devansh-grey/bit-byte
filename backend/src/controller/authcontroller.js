@@ -55,8 +55,6 @@ const login = async (req, res) => {
         if (!isPassword) {
             return res.status(400).json({ message: "Invalid credentials" })
         }
-
-        // createToken is no longer async — no await needed
         createToken(user._id, res)
 
         res.status(200).json({
@@ -73,8 +71,11 @@ const login = async (req, res) => {
 }
 
 const logout = (_, res) => {
-    // Fixed: cookie name must match what createToken sets ("jwt", not "token")
-    res.cookie("jwt", "", { maxAge: 0 })
+    res.cookie("jwt", "", { 
+    maxAge: 0, 
+    sameSite: ENV.NODE_ENV === "production" ? "none" : "strict",
+    secure: true
+})
     res.status(200).json({ message: "Logged out successfully" })
 }
 

@@ -2,7 +2,7 @@ import { io } from "socket.io-client"
 
 const BASE_URL = import.meta.env.MODE === "development"
     ? "http://localhost:5000"
-    : "/"
+    : import.meta.env.VITE_SOCKET_URL 
 
 let socket = null
 
