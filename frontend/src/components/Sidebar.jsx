@@ -24,7 +24,6 @@ const Sidebar = () => {
         }
     }
 
-    // Called by Contacts after accessChat succeeds — switches to chats tab
     const handleChatStarted = () => {
         setActiveTab('chats')
         setIsOpen(false)
@@ -32,13 +31,22 @@ const Sidebar = () => {
 
     return (
         <>
+            {/* Mobile Menu Button */}
             {!isOpen && (
                 <button
-                    className="md:hidden fixed top-5 left-5 z-50 p-3 bg-white border-2 border-black hover:bg-black hover:text-white transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                    className="md:hidden fixed top-4 left-5 z-50 p-3 bg-white border-2 border-black hover:bg-black hover:text-white transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                     onClick={() => setIsOpen(true)}
                 >
                     <span className="material-symbols-outlined text-2xl">menu</span>
                 </button>
+            )}
+
+            {/* Backdrop Overlay for closing sidebar on mobile */}
+            {isOpen && (
+                <div 
+                    className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+                    onClick={() => setIsOpen(false)}
+                />
             )}
 
             <div className={`
@@ -84,7 +92,7 @@ const Sidebar = () => {
 
                     <div className="flex-1 bg-gray-50">
                         {activeTab === 'chats'
-                            ? <Chats />
+                            ? <Chats onChatSelected={() => setIsOpen(false)} />
                             : <Contacts onChatStarted={handleChatStarted} />
                         }
                     </div>

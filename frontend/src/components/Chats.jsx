@@ -3,7 +3,7 @@ import { useChatStore } from "../store/ChatStore.js"
 import { useAuthStore } from "../store/AuthStore.js"
 import Avatar from "../components/Avatar"
 
-const Chats = () => {
+const Chats = ({ onChatSelected }) => {
     const { chats, selectedChat, fetchChats, setSelectedChat, typingUsers } = useChatStore()
     const { authUser, onlineUsers } = useAuthStore()
 
@@ -27,7 +27,6 @@ const Chats = () => {
         return prefix + message.text?.toUpperCase()
     }
 
-    // Only fetch once on mount — NOT on every render
     useEffect(() => {
         fetchChats()
     }, [])
@@ -49,14 +48,15 @@ const Chats = () => {
                 const isOnline = onlineUsers.includes(otherUser?._id)
                 const isTyping = typingUsers[chat._id]?.size > 0
 
-
-
                 if (!otherUser) return null
 
                 return (
                     <div
                         key={chat._id}
-                        onClick={() => setSelectedChat(chat)}
+                        onClick={() => {
+                            setSelectedChat(chat)
+                            onChatSelected?.()
+                        }}
                         className={`px-6 py-4 transition-all cursor-pointer group flex items-center gap-4
                         ${selectedChat?._id === chat._id
                                 ? "bg-black text-white"
@@ -70,7 +70,7 @@ const Chats = () => {
                                 size={40}
                             />
                             {isOnline && (
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-black border-2 border-white rounded-full" />
                             )}
                         </div>
 
@@ -88,7 +88,7 @@ const Chats = () => {
                             <p className={`text-xs font-mono truncate uppercase ${selectedChat?._id === chat._id ? "text-gray-300" : "text-gray-600 group-hover:text-gray-300"
                                 }`}>
                                 {isTyping
-                                    ? <span className={selectedChat ? "text-green-400" : "text-green-600"}>
+                                    ? <span className={`animate-pulse ${selectedChat ? "text-white" : "text-black"}`}>
                                         TYPING...
                                     </span>
                                     : getLastMessagePreview(chat.lastmessage, authUser)

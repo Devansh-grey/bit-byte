@@ -232,8 +232,8 @@ const MessageArea = () => {
     return (
         <div className="flex flex-col h-full w-full bg-white font-mono text-black">
 
-            {/* HEADER */}
-            <div className="h-20 flex items-center justify-between px-8 border-b-2 border-black bg-white shrink-0">
+            {/* HEADER - Adjusted mobile padding (pl-20) to clear the hamburger menu */}
+            <div className="h-20 flex items-center justify-between px-4 pl-20 md:px-8 md:pl-8 border-b-2 border-black bg-white shrink-0">
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <Avatar
@@ -242,7 +242,7 @@ const MessageArea = () => {
                             size={40}
                         />
                         {isOnline && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-black border-2 border-white rounded-full" />
                         )}
                     </div>
 
@@ -251,12 +251,12 @@ const MessageArea = () => {
                             {otherUser?.fullName || "Unknown User"}
                         </h2>
                         {isOtherTyping ? (
-                            <span className="text-[10px] font-mono text-green-600 uppercase tracking-widest">
+                            <span className="text-[10px] font-mono text-black uppercase tracking-widest animate-pulse">
                                 typing...
                             </span>
                         ) : (
                             <span className={`text-[10px] font-mono uppercase tracking-widest ${
-                                isOnline ? "text-green-600" : "text-gray-400"
+                                isOnline ? "text-black font-bold" : "text-gray-400"
                             }`}>
                                 {isOnline ? "● ONLINE" : "● OFFLINE"}
                             </span>
@@ -269,13 +269,12 @@ const MessageArea = () => {
                 </button>
             </div>
 
-            {/* MESSAGES AREA */}
+            {/* MESSAGES AREA - Reduced p-8 to p-4, reduced gap-6 to gap-3 */}
             <div
-                className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 bg-gray-50 custom-scrollbar"
-                onClick={() => setConfirmDeleteId(null)} // dismiss popover on backdrop click
+                className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col gap-3 bg-gray-50 custom-scrollbar"
+                onClick={() => setConfirmDeleteId(null)} 
             >
 
-                {/* Loading state */}
                 {isLoadingMessages && (
                     <div className="flex justify-center py-4">
                         <span className="text-xs text-gray-400 uppercase tracking-widest animate-pulse">
@@ -284,7 +283,6 @@ const MessageArea = () => {
                     </div>
                 )}
 
-                {/* Empty state */}
                 {!isLoadingMessages && messages.length === 0 && (
                     <div className="flex justify-center py-4">
                         <span className="text-xs text-gray-400 uppercase tracking-widest">
@@ -293,11 +291,10 @@ const MessageArea = () => {
                     </div>
                 )}
 
-                {/* Messages grouped by date */}
                 {groupMessagesByDay(messages).map((item) => {
                     if (item.type === "separator") {
                         return (
-                            <div key={item.key} className="flex items-center justify-center py-2">
+                            <div key={item.key} className="flex items-center justify-center">
                                 <span className="text-[10px] font-bold bg-black text-white px-3 py-1 uppercase tracking-widest">
                                     {item.label}
                                 </span>
@@ -314,12 +311,11 @@ const MessageArea = () => {
                         <div key={message._id}>
                             {isSelf ? (
                                 // ── Own message (right-aligned) ──────────────
-                                <div className="flex flex-col gap-1 items-end w-full">
+                                <div className="flex flex-col items-end w-full">
                                     <div
-                                        className={`group relative max-w-[75%] ${isDeleting ? "opacity-40 pointer-events-none" : ""}`}
-                                        onClick={(e) => e.stopPropagation()} // prevent backdrop dismiss
+                                        className={`group relative max-w-[85%] md:max-w-[75%] ${isDeleting ? "opacity-40 pointer-events-none" : ""}`}
+                                        onClick={(e) => e.stopPropagation()} 
                                     >
-                                        {/* Delete trigger — visible on hover */}
                                         <button
                                             onClick={() => setConfirmDeleteId(showConfirm ? null : message._id)}
                                             className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500"
@@ -331,7 +327,6 @@ const MessageArea = () => {
                                             </span>
                                         </button>
 
-                                        {/* Confirm popover */}
                                         {showConfirm && (
                                             <div className="absolute -left-48 top-1/2 -translate-y-1/2 z-10 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-3 py-2 flex items-center gap-2 whitespace-nowrap">
                                                 <span className="text-[10px] font-bold uppercase">Delete?</span>
@@ -350,7 +345,7 @@ const MessageArea = () => {
                                             </div>
                                         )}
 
-                                        <div className="bg-white border-2 border-black p-4 text-sm leading-relaxed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                        <div className="bg-white border-2 border-black px-2 py-1 text-sm leading-relaxed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                                             {isDeleting && (
                                                 <span className="text-[10px] text-gray-400 uppercase animate-pulse block mb-1">
                                                     Deleting...
@@ -365,9 +360,9 @@ const MessageArea = () => {
                                                 />
                                             )}
                                             {message.text && (
-                                                <p className="pr-2">{message.text}</p>
+                                                <p className="">{message.text}</p>
                                             )}
-                                            <span className="block text-right text-[10px] font-bold text-gray-400 uppercase mt-1">
+                                            <span className="block text-right text-[10px] font-bold text-gray-400 uppercase ">
                                                 {formatMessageTime(message.createdAt)}
                                             </span>
                                         </div>
@@ -375,8 +370,9 @@ const MessageArea = () => {
                                 </div>
                             ) : (
                                 // ── Other user's message (left-aligned) ──────
-                                <div className="flex flex-col gap-1 items-start w-full">
-                                    <div className="relative bg-white border-2 border-black p-4 text-sm leading-relaxed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[75%]">
+                                <div className="flex flex-col items-start w-full">
+                                    {/* Reduced p-4 to px-4 py-2 */}
+                                    <div className="relative bg-white border-2 border-black px-4 py-2 text-sm leading-relaxed shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-[85%] md:max-w-[75%]">
                                         {message.media && (
                                             <img
                                                 src={message.media}
@@ -386,7 +382,7 @@ const MessageArea = () => {
                                             />
                                         )}
                                         {message.text && (
-                                            <p className="pr-10">{message.text}</p>
+                                            <p className="">{message.text}</p>
                                         )}
                                         <span className="block text-right text-[10px] font-bold text-gray-400 uppercase mt-1">
                                             {formatMessageTime(message.createdAt)}
@@ -397,7 +393,6 @@ const MessageArea = () => {
                         </div>
                     )
                 })}
-
                 <div ref={messagesEndRef} />
             </div>
 
