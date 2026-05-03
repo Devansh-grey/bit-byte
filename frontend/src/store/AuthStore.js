@@ -14,9 +14,9 @@ export const useAuthStore = create((set, get) => ({
         try {
             const res = await axiosInstance.get("/auth/check")
             set({ authUser: res.data })
-            connectSocket()  // ← no userId arg needed
+            connectSocket() 
             const socket = getSocket()
-            socket?.on("onlineUsers", (users) => {   // ← matches server emit name
+            socket?.on("onlineUsers", (users) => {  
                 get().setOnlineUsers(users)
             })
         } catch {
@@ -27,23 +27,19 @@ export const useAuthStore = create((set, get) => ({
     },
 
     signup: async (data) => {
-        try {
-            const res = await axiosInstance.post("/auth/signup", data)
-            set({ authUser: res.data })
-            connectSocket()
-            const socket = getSocket()
-            socket?.on("onlineUsers", (users) => get().setOnlineUsers(users))
-            return res.data
-        } catch (error) {
-            throw error
-        }
+         const res = await axiosInstance.post("/auth/signup", data)
+        return res.data
+    },
+    resendVerification: async (email) => {
+        const res = await axiosInstance.post("/auth/resend-verification", { email })
+        return res.data
     },
 
     login: async (data) => {
         try {
             const res = await axiosInstance.post("/auth/login", data)
             set({ authUser: res.data })
-            connectSocket()  // ← no userId arg
+            connectSocket() 
             const socket = getSocket()
             socket?.on("onlineUsers", (users) => get().setOnlineUsers(users))
             return res.data

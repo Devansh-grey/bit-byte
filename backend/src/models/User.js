@@ -33,6 +33,18 @@ const userSchema = mongoose.Schema({
     lastSeen: {
         type: Date,
         default: Date.now
+    },
+    isVerrified: {
+        type: Boolean,
+        default: false
+    },
+    verificationToken: {
+        type: String,
+        default: null
+    },
+    verificationTokenExpiry: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

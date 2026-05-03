@@ -48,3 +48,58 @@ export function createWelcomeEmailTemplate(name, clientURL) {
   </html>
   `;
 }
+
+export function createVerificationEmailTemplate(name, verificationURL) {
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify your Bitchat account</title>
+  </head>
+  <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+ 
+    <div style="background: #000000; padding: 30px; text-align: center; border-radius: 0;">
+      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -1px; font-style: italic;">BITCHAT</h1>
+    </div>
+ 
+    <div style="background-color: #ffffff; padding: 40px; border: 2px solid #000; border-top: none;">
+      <p style="font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #666; margin: 0 0 8px 0;">Verification Required</p>
+      <h2 style="font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin: 0 0 24px 0;">Confirm your email</h2>
+ 
+      <p style="font-size: 14px; margin: 0 0 8px 0;">Hello <strong>${name}</strong>,</p>
+      <p style="font-size: 14px; margin: 0 0 28px 0;">
+        You signed up for Bitchat. Click the button below to verify your email address and activate your account.
+        This link expires in <strong>24 hours</strong>.
+      </p>
+ 
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${verificationURL}"
+           style="display: inline-block; background: #000; color: #fff; text-decoration: none;
+                  padding: 14px 36px; font-size: 13px; font-weight: 900; text-transform: uppercase;
+                  letter-spacing: 3px; border: 2px solid #000;">
+          [ VERIFY EMAIL ]
+        </a>
+      </div>
+ 
+      <p style="font-size: 12px; color: #888; margin: 24px 0 0 0;">
+        If the button doesn't work, paste this link into your browser:<br/>
+        <a href="${verificationURL}" style="color: #000; word-break: break-all;">${verificationURL}</a>
+      </p>
+ 
+      <hr style="border: none; border-top: 2px solid #000; margin: 32px 0;" />
+ 
+      <p style="font-size: 12px; color: #999; margin: 0;">
+        Didn't sign up for Bitchat? You can safely ignore this email — your address won't be used.
+      </p>
+    </div>
+ 
+    <div style="text-align: center; padding: 20px; color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;">
+      © 2026 Bitchat
+    </div>
+ 
+  </body>
+  </html>
+  `;
+}
